@@ -9,6 +9,7 @@
 #define _MY_PLUGIN_H_
 
 #include <vamp-sdk/Plugin.h>
+#include "Backend.h"
 
 using std::string;
 
@@ -40,9 +41,7 @@ public:
 
 protected:
     size_t m_stepSize;
-    int m_pid;
-    int m_toPython;
-    int m_fromPython;
+    std::unique_ptr<vds::Backend> m_backend;
     int m_count;
     Vamp::RealTime m_start;
     size_t m_duration;

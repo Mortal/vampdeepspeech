@@ -39,7 +39,11 @@ N_CONTEXT = 9
 def read_audio():
     chunks = []
     while True:
-        n = np.frombuffer(sys.stdin.buffer.read(4), np.int32)[0]
+        n_bin = sys.stdin.buffer.read(4)
+        if len(n_bin) < 4:
+            print("Unexpected EOF", file=sys.stderr)
+            break
+        n = np.frombuffer(n_bin, np.int32)[0]
         if n == 0:
             break
         float_chunk = np.frombuffer(sys.stdin.buffer.read(n*4), np.float32)
@@ -83,14 +87,15 @@ def main():
     fs = 16000
     while True:
         audio = read_audio()
-        if not audio:
+        if audio is None:
             break
         # We can assume 16kHz
         audio_length = len(audio) * ( 1 / 16000)
 
         print('Running inference.', file=sys.stderr)
         inference_start = timer()
-        print(ds.stt(audio, fs))
+        inference = ds.stt(audio, fs)
+        print(inference, flush=True)
         inference_end = timer() - inference_start
         print('Inference took %0.3fs for %0.3fs audio file.' % (inference_end, audio_length), file=sys.stderr)
 

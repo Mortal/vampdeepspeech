@@ -5,10 +5,8 @@
 
 
 #include "MyPlugin.h"
-#include <unistd.h>
 #include <sstream>
 #include "vds_error.h"
-#include "Backend.h"
 
 
 
@@ -18,7 +16,6 @@ MyPlugin::MyPlugin(float inputSampleRate) :
     // in member variables) to their default values here -- the host
     // will not do that for you
 {
-    m_pid = m_toPython = m_fromPython = -1;
     m_count = 0;
 }
 
@@ -108,30 +105,9 @@ MyPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
     m_stepSize = std::min(stepSize, blockSize);
 
-    int fd1[2];
-    int fd2[2];
-    int r = pipe(fd1);
-    if (r == -1) vds_error("No pipe()");
-    r = pipe(fd2);
-    if (r == -1) vds_error("No pipe()");
-    int pid = fork();
-    if (pid == -1) vds_error("No fork()");
-    if (pid == 0) {
-	close(fd1[1]);
-	close(fd2[0]);
-	r = dup2(fd1[0], 0);
-	if (r == -1) vds_error("No dup2()");
-	r = dup2(fd2[1], 1);
-	if (r == -1) vds_error("No dup2()");
-	char path[] = "/home/rav/work/vampdeepspeech/deepspeechdirect.py";
-	execl(path, path, 0);
-	vds_error("No execve()");
-    }
-    close(fd1[0]);
-    close(fd2[1]);
-    m_pid = pid;
-    m_toPython = fd1[1];
-    m_fromPython = fd2[0];
+    m_backend.reset(
+	new vds::Backend(
+	    "/home/rav/work/vampdeepspeech/deepspeechdirect.py"));
 
     return true;
 }
@@ -140,10 +116,7 @@ void
 MyPlugin::reset()
 {
     // Clear buffers, reset stored values, etc
-    if (m_toPython != -1) close(m_toPython);
-    m_toPython = -1;
-    if (m_fromPython != -1) close(m_fromPython);
-    m_fromPython = -1;
+    m_backend.reset();
     m_count = 0;
 }
 
@@ -156,39 +129,22 @@ MyPlugin::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 	m_duration = 0;
     }
     m_duration += m_stepSize;
-    int s = 0;
-    int r;
-    while (s < m_stepSize) {
-	r = ::write(m_toPython, inputBuffers[0], (m_stepSize - s) * sizeof(float));
-	if (r < 0) vds_error("write failed");
-	s += r;
-    }
+    m_backend->feed(inputBuffers[0], m_stepSize);
     return FeatureSet();
 }
 
 MyPlugin::FeatureSet
 MyPlugin::getRemainingFeatures()
 {
-    close(m_toPython);
-    m_toPython = -1;
-    std::string buf;
-    buf.resize(1024);
-    std::stringstream res;
-    int r = 0;
-    do {
-	r = read(m_fromPython, &buf[0], buf.size());
-	if (r > 0) res.write(&buf[0], r);
-    } while (r > 0);
-    if (r < 0) vds_error("read failed");
-    close(m_fromPython);
-    m_fromPython = -1;
+    std::string res = m_backend->infer();
+    m_backend.reset();
 
     Feature feature;
     feature.hasTimestamp = true;
     feature.timestamp = m_start;
     feature.hasDuration = true;
     feature.duration = Vamp::RealTime(m_duration, 0) / m_inputSampleRate;
-    feature.label = res.str();
+    feature.label = res;
     FeatureSet result;
     result[0].push_back(feature);
     return result;

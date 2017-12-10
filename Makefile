@@ -20,8 +20,13 @@ $(PLUGIN_OBJECTS): $(PLUGIN_HEADERS)
 
 clean:
 	$(RM) *.o
+.PHONY: clean
 
-run: vampdeepspeech.so
+install: vampdeepspeech.so
 	cp -a $^ ~/vamp/
 	$(RM) ~/.audacity-data/pluginregistry.cfg
+.PHONY: install
+
+run: install
 	audacity
+.PHONY: run

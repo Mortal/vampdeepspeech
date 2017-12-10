@@ -60,6 +60,7 @@ namespace {
 	}
 
 	~Process() {
+	    close();
 	    if (m_pid != -1) waitpid(m_pid, 0, 0);
 	    m_pid = -1;
 	}
@@ -70,6 +71,10 @@ namespace {
 	    m_toProcess.close();
 	}
 	void read_done() {
+	    m_fromProcess.close();
+	}
+	void close() {
+	    m_toProcess.close();
 	    m_fromProcess.close();
 	}
 
@@ -87,30 +92,39 @@ public:
     impl(std::string filename) : m_filename(filename) {
     }
 
+    ~impl() {
+	feed(nullptr, 0);
+    }
+
     void launch() {
 	if (m_proc) return;
 	m_proc.reset(new Process(m_filename.c_str()));
 	m_results = fdopen(m_proc->from_process(), "r");
     }
 
-    void feed(float * chunk, size_t n) {
+    void feed(const float * chunk, size_t n) {
 	launch();
 	int fd = m_proc->to_process();
+	int written = 0;
+	int nbytes = n*sizeof(float);
+	char * buf = (char *) chunk;
 	write(fd, &n, 4);
-	write(fd, chunk, n*sizeof(float));
+	while (written < nbytes) {
+	    written += write(fd, buf+written, nbytes - written);
+	}
     }
 
     std::string infer() {
-	write(m_proc->to_process(), "\0\0\0\0", 4);
-	char ** lineptr = 0;
+	feed(nullptr, 0);
+	char * lineptr = nullptr;
 	size_t n = 0;
-	ssize_t r = ::getline(lineptr, &n, m_results);
+	ssize_t r = ::getline(&lineptr, &n, m_results);
 	if (r == -1) {
-	    ::free(*lineptr);
+	    if (lineptr != nullptr) ::free(lineptr);
 	    vds_error("getline");
 	}
-	std::string line = *lineptr;
-	::free(*lineptr);
+	std::string line = lineptr;
+	::free(lineptr);
 	return line;
     }
 
@@ -124,7 +138,7 @@ Backend::Backend(std::string filename)
     : pimpl(new Backend::impl(filename)) {}
 
 Backend::~Backend() {}
-void Backend::feed(float * chunk, size_t n) {pimpl->feed(chunk, n);}
+void Backend::feed(const float * chunk, size_t n) {pimpl->feed(chunk, n);}
 std::string Backend::infer() {return pimpl->infer();}
 
 }
