@@ -44,6 +44,8 @@ protected:
     int m_toPython;
     int m_fromPython;
     int m_count;
+    Vamp::RealTime m_start;
+    size_t m_duration;
 };
 
 

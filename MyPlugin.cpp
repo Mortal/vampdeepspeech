@@ -156,6 +156,11 @@ MyPlugin::FeatureSet
 MyPlugin::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 {
     // Do actual work!
+    if (m_count++ == 0) {
+	m_start = timestamp;
+	m_duration = 0;
+    }
+    m_duration += m_stepSize;
     int s = 0;
     int r;
     while (s < m_stepSize) {
@@ -185,9 +190,9 @@ MyPlugin::getRemainingFeatures()
 
     Feature feature;
     feature.hasTimestamp = true;
-    feature.timestamp = Vamp::RealTime(2, 500000000);
+    feature.timestamp = m_start;
     feature.hasDuration = true;
-    feature.duration = Vamp::RealTime(1, 500000000);
+    feature.duration = Vamp::RealTime(m_duration, 0) / m_inputSampleRate;
     feature.label = res.str();
     FeatureSet result;
     result[0].push_back(feature);
