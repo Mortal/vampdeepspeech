@@ -90,15 +90,17 @@ namespace vds {
 class Backend::impl {
 public:
     impl(std::string filename) : m_filename(filename) {
+	m_hasData = false;
     }
 
     ~impl() {
-	feed(nullptr, 0);
+	clear();
     }
 
     void launch() {
 	if (m_proc) return;
 	m_proc.reset(new Process(m_filename.c_str()));
+	m_hasData = false;
 	m_results = fdopen(m_proc->from_process(), "r");
     }
 
@@ -112,13 +114,16 @@ public:
 	while (written < nbytes) {
 	    written += write(fd, buf+written, nbytes - written);
 	}
+	m_hasData = true;
     }
 
     std::string infer() {
+	if (!m_hasData) return "";
 	feed(nullptr, 0);
 	char * lineptr = nullptr;
 	size_t n = 0;
 	ssize_t r = ::getline(&lineptr, &n, m_results);
+	m_hasData = false;
 	if (r == -1) {
 	    if (lineptr != nullptr) ::free(lineptr);
 	    vds_error("getline");
@@ -128,10 +133,15 @@ public:
 	return line;
     }
 
+    void clear() {
+	infer();
+    }
+
 private:
     std::string m_filename;
     std::unique_ptr<Process> m_proc;
     FILE * m_results;
+    bool m_hasData;
 };
 
 Backend::Backend(std::string filename)
@@ -140,5 +150,6 @@ Backend::Backend(std::string filename)
 Backend::~Backend() {}
 void Backend::feed(const float * chunk, size_t n) {pimpl->feed(chunk, n);}
 std::string Backend::infer() {return pimpl->infer();}
+void Backend::clear() {pimpl->clear();}
 
 }

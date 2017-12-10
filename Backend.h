@@ -6,6 +6,7 @@ namespace vds {
 	Backend(std::string filename);
 	~Backend();
 	void feed(const float * chunk, size_t n);
+	void clear();
 	std::string infer();
     private:
 	class impl;

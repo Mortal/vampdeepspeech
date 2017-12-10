@@ -107,7 +107,7 @@ void
 DeepSpeechPlugin::reset()
 {
     // Clear buffers, reset stored values, etc
-    m_backend.reset();
+    m_backend->clear();
     m_count = 0;
 }
 
@@ -128,7 +128,6 @@ DeepSpeechPlugin::FeatureSet
 DeepSpeechPlugin::getRemainingFeatures()
 {
     std::string res = m_backend->infer();
-    m_backend.reset();
 
     Feature feature;
     feature.hasTimestamp = true;
