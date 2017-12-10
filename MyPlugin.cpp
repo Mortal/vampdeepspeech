@@ -5,6 +5,16 @@
 
 
 #include "MyPlugin.h"
+#include <unistd.h>
+#include <sstream>
+
+
+namespace {
+    void my_error(const char * s) {
+	std::cerr << s << std::endl;
+	throw std::runtime_error(s);
+    }
+}
 
 
 MyPlugin::MyPlugin(float inputSampleRate) :
@@ -13,6 +23,8 @@ MyPlugin::MyPlugin(float inputSampleRate) :
     // in member variables) to their default values here -- the host
     // will not do that for you
 {
+    m_pid = m_toPython = m_fromPython = -1;
+    m_count = 0;
 }
 
 MyPlugin::~MyPlugin()
@@ -95,10 +107,36 @@ MyPlugin::getOutputDescriptors() const
 bool
 MyPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
+    m_count = 0;
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
 
-    // Real initialisation work goes here!
+    m_stepSize = std::min(stepSize, blockSize);
+
+    int fd1[2];
+    int fd2[2];
+    int r = pipe(fd1);
+    if (r == -1) my_error("No pipe()");
+    r = pipe(fd2);
+    if (r == -1) my_error("No pipe()");
+    int pid = fork();
+    if (pid == -1) my_error("No fork()");
+    if (pid == 0) {
+	close(fd1[1]);
+	close(fd2[0]);
+	r = dup2(fd1[0], 0);
+	if (r == -1) my_error("No dup2()");
+	r = dup2(fd2[1], 1);
+	if (r == -1) my_error("No dup2()");
+	char path[] = "/home/rav/work/vampdeepspeech/deepspeechdirect.py";
+	execl(path, path, 0);
+	my_error("No execve()");
+    }
+    close(fd1[0]);
+    close(fd2[1]);
+    m_pid = pid;
+    m_toPython = fd1[1];
+    m_fromPython = fd2[0];
 
     return true;
 }
@@ -107,18 +145,52 @@ void
 MyPlugin::reset()
 {
     // Clear buffers, reset stored values, etc
+    if (m_toPython != -1) close(m_toPython);
+    m_toPython = -1;
+    if (m_fromPython != -1) close(m_fromPython);
+    m_fromPython = -1;
+    m_count = 0;
 }
 
 MyPlugin::FeatureSet
 MyPlugin::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 {
     // Do actual work!
+    int s = 0;
+    int r;
+    while (s < m_stepSize) {
+	r = ::write(m_toPython, inputBuffers[0], (m_stepSize - s) * sizeof(float));
+	if (r < 0) my_error("write failed");
+	s += r;
+    }
     return FeatureSet();
 }
 
 MyPlugin::FeatureSet
 MyPlugin::getRemainingFeatures()
 {
-    return FeatureSet();
+    close(m_toPython);
+    m_toPython = -1;
+    std::string buf;
+    buf.resize(1024);
+    std::stringstream res;
+    int r = 0;
+    do {
+	r = read(m_fromPython, &buf[0], buf.size());
+	if (r > 0) res.write(&buf[0], r);
+    } while (r > 0);
+    if (r < 0) my_error("read failed");
+    close(m_fromPython);
+    m_fromPython = -1;
+
+    Feature feature;
+    feature.hasTimestamp = true;
+    feature.timestamp = Vamp::RealTime(2, 500000000);
+    feature.hasDuration = true;
+    feature.duration = Vamp::RealTime(1, 500000000);
+    feature.label = res.str();
+    FeatureSet result;
+    result[0].push_back(feature);
+    return result;
 }
 

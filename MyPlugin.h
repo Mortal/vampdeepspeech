@@ -39,7 +39,11 @@ public:
     FeatureSet getRemainingFeatures();
 
 protected:
-    // plugin-specific data and methods go here
+    size_t m_stepSize;
+    int m_pid;
+    int m_toPython;
+    int m_fromPython;
+    int m_count;
 };
 
 
