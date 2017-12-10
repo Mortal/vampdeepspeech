@@ -21,6 +21,7 @@ static Vamp::PluginAdapter<MyPlugin> myPluginAdapter;
 const VampPluginDescriptor *
 vampGetPluginDescriptor(unsigned int version, unsigned int index)
 {
+    std::cout << "HELLO " << version << ' ' << index << std::endl;
     if (version < 1) return 0;
 
     // Return a different plugin adaptor's descriptor for each index,

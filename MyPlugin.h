@@ -27,18 +27,6 @@ public:
     string getCopyright() const;
 
     InputDomain getInputDomain() const;
-    size_t getPreferredBlockSize() const;
-    size_t getPreferredStepSize() const;
-    size_t getMinChannelCount() const;
-    size_t getMaxChannelCount() const;
-
-    ParameterList getParameterDescriptors() const;
-    float getParameter(string identifier) const;
-    void setParameter(string identifier, float value);
-
-    ProgramList getPrograms() const;
-    string getCurrentProgram() const;
-    void selectProgram(string name);
 
     OutputList getOutputDescriptors() const;
 
