@@ -8,7 +8,6 @@ DeepSpeechPlugin::DeepSpeechPlugin(float inputSampleRate) :
     // in member variables) to their default values here -- the host
     // will not do that for you
 {
-    if (inputSampleRate != 16000) vds_error("Sample rate must be 16KHz");
     m_count = 0;
 }
 
@@ -90,6 +89,7 @@ DeepSpeechPlugin::getOutputDescriptors() const
 bool
 DeepSpeechPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
+    if (m_inputSampleRate != 16000) vds_error("Sample rate must be 16KHz");
     m_count = 0;
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
@@ -99,6 +99,8 @@ DeepSpeechPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
     m_backend.reset(
 	new vds::Backend(
 	    "/home/rav/work/vampdeepspeech/deepspeechdirect.py"));
+    m_silence.reset(
+	new vds::SilenceDetection());
 
     return true;
 }
@@ -119,15 +121,28 @@ DeepSpeechPlugin::process(const float *const *inputBuffers, Vamp::RealTime times
 	m_start = timestamp;
 	m_duration = 0;
     }
-    m_duration += m_stepSize;
-    m_backend->feed(inputBuffers[0], m_stepSize);
-    return FeatureSet();
+    if (m_silence->silent(inputBuffers[0], m_stepSize)) {
+	return infer();
+    } else {
+	m_duration += m_stepSize;
+	m_backend->feed(inputBuffers[0], m_stepSize);
+	return FeatureSet();
+    }
 }
 
 DeepSpeechPlugin::FeatureSet
-DeepSpeechPlugin::getRemainingFeatures()
+DeepSpeechPlugin::getRemainingFeatures() {
+    return infer();
+}
+
+DeepSpeechPlugin::FeatureSet
+DeepSpeechPlugin::infer()
 {
     std::string res = m_backend->infer();
+    if (res.size() == 0) {
+	m_count = 0;
+	return FeatureSet();
+    }
 
     Feature feature;
     feature.hasTimestamp = true;
@@ -137,5 +152,6 @@ DeepSpeechPlugin::getRemainingFeatures()
     feature.label = res;
     FeatureSet result;
     result[0].push_back(feature);
+    m_count = 0;
     return result;
 }

@@ -3,6 +3,7 @@
 
 #include <vamp-sdk/Plugin.h>
 #include "Backend.h"
+#include "SilenceDetection.h"
 
 class DeepSpeechPlugin : public Vamp::Plugin
 {
@@ -29,9 +30,13 @@ public:
 
     FeatureSet getRemainingFeatures();
 
+private:
+    FeatureSet infer();
+
 protected:
     size_t m_stepSize;
     std::unique_ptr<vds::Backend> m_backend;
+    std::unique_ptr<vds::SilenceDetection> m_silence;
     int m_count;
     Vamp::RealTime m_start;
     size_t m_duration;

@@ -95,6 +95,7 @@ public:
 
     ~impl() {
 	clear();
+	feed(nullptr, 0);
     }
 
     void launch() {
