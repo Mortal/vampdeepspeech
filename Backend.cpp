@@ -111,9 +111,11 @@ public:
 	int written = 0;
 	int nbytes = n*sizeof(float);
 	char * buf = (char *) chunk;
-	write(fd, &n, 4);
+	if (write(fd, &n, 4) != 4) vds_error("write");
 	while (written < nbytes) {
-	    written += write(fd, buf+written, nbytes - written);
+	    int r = write(fd, buf+written, nbytes - written);
+	    if (r < 0) vds_error("write");
+	    written += r;
 	}
 	m_hasData = true;
     }
@@ -129,10 +131,9 @@ public:
 	    if (lineptr != nullptr) ::free(lineptr);
 	    vds_error("getline");
 	}
-	std::string line = lineptr;
+	while (r > 0 && lineptr[r-1] == '\n') r--;
+	std::string line(lineptr, lineptr+r);
 	::free(lineptr);
-	while (line.size() > 0 && line[line.size()-1] == '\n')
-	    line.resize(line.size()-1);
 	return line;
     }
 
