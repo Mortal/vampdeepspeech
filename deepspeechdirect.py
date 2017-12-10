@@ -1,7 +1,8 @@
-#!/home/rav/venvs/deepspeech/bin/python
+#!/usr/bin/env python
 from timeit import default_timer as timer
 
-import argparse
+import os
+# import argparse
 import sys
 # import scipy.io.wavfile as wav
 import numpy as np
@@ -65,10 +66,11 @@ def main():
     # parser.add_argument('trie', type=str, nargs='?',
     #                     help='Path to the language model trie file created with native_client/generate_trie')
     args = types.SimpleNamespace()
-    args.model = '/home/rav/codes/DeepSpeech/models/output_graph.pb'
-    args.alphabet = '/home/rav/codes/DeepSpeech/models/alphabet.txt'
-    args.lm = '/home/rav/codes/DeepSpeech/models/lm.binary'
-    args.trie = '/home/rav/codes/DeepSpeech/models/trie'
+    base = os.path.dirname(__file__)
+    args.model = os.path.join(base, 'models', 'output_graph.pb')
+    args.alphabet = os.path.join(base, 'models', 'alphabet.txt')
+    args.lm = os.path.join(base, 'models', 'lm.binary')
+    args.trie = os.path.join(base, 'models', 'trie')
 
     print('Loading model from file %s' % (args.model), file=sys.stderr)
     model_load_start = timer()

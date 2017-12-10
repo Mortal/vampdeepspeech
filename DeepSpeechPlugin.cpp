@@ -98,7 +98,7 @@ DeepSpeechPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
     m_backend.reset(
 	new vds::Backend(
-	    "/home/rav/work/vampdeepspeech/deepspeechdirect.py"));
+	    VDS_ROOT "/deepspeechdirect.py"));
     m_silence.reset(
 	new vds::SilenceDetection());
 
