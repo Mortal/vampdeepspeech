@@ -16,6 +16,7 @@ MyPlugin::MyPlugin(float inputSampleRate) :
     // in member variables) to their default values here -- the host
     // will not do that for you
 {
+    if (inputSampleRate != 16000) vds_error("Sample rate must be 16KHz");
     m_count = 0;
 }
 
