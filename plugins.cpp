@@ -1,18 +1,12 @@
-
-// This is a skeleton file for use in creating your own plugin
-// libraries.  Replace MyPlugin and myPlugin throughout with the name
-// of your first plugin class, and fill in the gaps as appropriate.
-
-
 #include <vamp/vamp.h>
 #include <vamp-sdk/PluginAdapter.h>
 
-#include "MyPlugin.h"
+#include "DeepSpeechPlugin.h"
 
 
 // Declare one static adapter here for each plugin class in this library.
 
-static Vamp::PluginAdapter<MyPlugin> myPluginAdapter;
+static Vamp::PluginAdapter<DeepSpeechPlugin> myPluginAdapter;
 
 
 // This is the entry-point for the library, and the only function that
@@ -21,7 +15,6 @@ static Vamp::PluginAdapter<MyPlugin> myPluginAdapter;
 const VampPluginDescriptor *
 vampGetPluginDescriptor(unsigned int version, unsigned int index)
 {
-    std::cout << "HELLO " << version << ' ' << index << std::endl;
     if (version < 1) return 0;
 
     // Return a different plugin adaptor's descriptor for each index,
