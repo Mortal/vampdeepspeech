@@ -11,18 +11,18 @@ Prerequisites
 
 * The VAMP SDK in `/usr/include/vamp-sdk`.
 
-* The DeepSpeech Python bindings
+* NumPy and DeepSpeech (i.e. running `python -c 'import numpy, deepspeech'` should not give an error)
 
 * The DeepSpeech model files
   (`output_graph.pb`, `alphabet.txt`, `lm.binary`, `trie`)
-  in a subdirectory of this repository named `models`.
+  in a subdirectory named `models` of this repository checkout.
 
 Installation
 ------------
 
 * Run `make` to build `vampdeepspeech.so`
 
-* Run `make install` to copy this into `~/vamp`
+* Run `make install` to copy `vampdeepspeech.so` into the directory `~/vamp`
   and remove Audacity's plugin registry.
 
 * In Audacity, go to *Analyze* → *Add / Remove Plug-ins...*
