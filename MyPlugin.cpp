@@ -7,14 +7,9 @@
 #include "MyPlugin.h"
 #include <unistd.h>
 #include <sstream>
+#include "vds_error.h"
+#include "Backend.h"
 
-
-namespace {
-    void my_error(const char * s) {
-	std::cerr << s << std::endl;
-	throw std::runtime_error(s);
-    }
-}
 
 
 MyPlugin::MyPlugin(float inputSampleRate) :
@@ -116,21 +111,21 @@ MyPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
     int fd1[2];
     int fd2[2];
     int r = pipe(fd1);
-    if (r == -1) my_error("No pipe()");
+    if (r == -1) vds_error("No pipe()");
     r = pipe(fd2);
-    if (r == -1) my_error("No pipe()");
+    if (r == -1) vds_error("No pipe()");
     int pid = fork();
-    if (pid == -1) my_error("No fork()");
+    if (pid == -1) vds_error("No fork()");
     if (pid == 0) {
 	close(fd1[1]);
 	close(fd2[0]);
 	r = dup2(fd1[0], 0);
-	if (r == -1) my_error("No dup2()");
+	if (r == -1) vds_error("No dup2()");
 	r = dup2(fd2[1], 1);
-	if (r == -1) my_error("No dup2()");
+	if (r == -1) vds_error("No dup2()");
 	char path[] = "/home/rav/work/vampdeepspeech/deepspeechdirect.py";
 	execl(path, path, 0);
-	my_error("No execve()");
+	vds_error("No execve()");
     }
     close(fd1[0]);
     close(fd2[1]);
@@ -165,7 +160,7 @@ MyPlugin::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
     int r;
     while (s < m_stepSize) {
 	r = ::write(m_toPython, inputBuffers[0], (m_stepSize - s) * sizeof(float));
-	if (r < 0) my_error("write failed");
+	if (r < 0) vds_error("write failed");
 	s += r;
     }
     return FeatureSet();
@@ -184,7 +179,7 @@ MyPlugin::getRemainingFeatures()
 	r = read(m_fromPython, &buf[0], buf.size());
 	if (r > 0) res.write(&buf[0], r);
     } while (r > 0);
-    if (r < 0) my_error("read failed");
+    if (r < 0) vds_error("read failed");
     close(m_fromPython);
     m_fromPython = -1;
 

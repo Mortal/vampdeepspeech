@@ -35,6 +35,19 @@ N_FEATURES = 26
 # Size of the context window used for producing timesteps in the input vector
 N_CONTEXT = 9
 
+
+def read_audio():
+    chunks = []
+    while True:
+        n = np.frombuffer(sys.stdin.buffer.read(4), np.int32)[0]
+        if n == 0:
+            break
+        float_chunk = np.frombuffer(sys.stdin.buffer.read(n*4), np.float32)
+        chunks.append((float_chunk * 2**15).astype(np.int16))
+    if chunks:
+        return np.concatenate(chunks)
+
+
 def main():
     # parser = argparse.ArgumentParser(description='Benchmarking tooling for DeepSpeech native_client.')
     # parser.add_argument('model', type=str,
@@ -68,16 +81,18 @@ def main():
         print('Loaded language model in %0.3fs.' % (lm_load_end), file=sys.stderr)
 
     fs = 16000
-    audio = (np.frombuffer(sys.stdin.buffer.read(), dtype=np.float32) * 2**15).astype(np.int16)
-    # fs, audio = wav.read(args.audio)
-    # We can assume 16kHz
-    audio_length = len(audio) * ( 1 / 16000)
+    while True:
+        audio = read_audio()
+        if not audio:
+            break
+        # We can assume 16kHz
+        audio_length = len(audio) * ( 1 / 16000)
 
-    print('Running inference.', file=sys.stderr)
-    inference_start = timer()
-    print(ds.stt(audio, fs))
-    inference_end = timer() - inference_start
-    print('Inference took %0.3fs for %0.3fs audio file.' % (inference_end, audio_length), file=sys.stderr)
+        print('Running inference.', file=sys.stderr)
+        inference_start = timer()
+        print(ds.stt(audio, fs))
+        inference_end = timer() - inference_start
+        print('Inference took %0.3fs for %0.3fs audio file.' % (inference_end, audio_length), file=sys.stderr)
 
 if __name__ == '__main__':
     main()

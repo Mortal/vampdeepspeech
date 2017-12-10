@@ -1,8 +1,8 @@
 PLUGIN_LIBRARY_NAME := vampdeepspeech
 
-PLUGIN_SOURCES := MyPlugin.cpp plugins.cpp
+PLUGIN_SOURCES := MyPlugin.cpp plugins.cpp Backend.cpp
 
-PLUGIN_HEADERS := MyPlugin.h
+PLUGIN_HEADERS := MyPlugin.h Backend.h vds_error.h
 
 CXXFLAGS := -g -I/usr/include/vamp-sdk -Wall -fPIC
 PLUGIN_EXT := .so
