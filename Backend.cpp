@@ -131,6 +131,8 @@ public:
 	}
 	std::string line = lineptr;
 	::free(lineptr);
+	while (line.size() > 0 && line[line.size()-1] == '\n')
+	    line.resize(line.size()-1);
 	return line;
     }
 
