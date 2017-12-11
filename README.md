@@ -38,12 +38,6 @@ TODO
 
 This is very pre-alpha quality.
 
-* Add proper error messages instead of throwing `std::runtime_exception`
-
-* Check for missing Python and give error message
-
-* Check for missing DeepSpeech and give error message
-
 * Check for missing DeepSpeech models and give error message
 
 * Customizable silence detection
