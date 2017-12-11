@@ -53,9 +53,15 @@ namespace {
 	    if (r == -1) throw vds::syscall_failed("fork");
 	    if (r == 0) {
 		r = dup2(m_toProcess.read_end(), 0);
-		if (r == -1) throw vds::syscall_failed("dup2");
+		if (r == -1) {
+		    std::cout << "dup2 failed (1)" << std::endl;
+		    _exit(0);
+		}
 		r = dup2(m_fromProcess.write_end(), 1);
-		if (r == -1) throw vds::syscall_failed("dup2");
+		if (r == -1) {
+		    std::cout << "dup2 failed (2)" << std::endl;
+		    _exit(0);
+		}
 		execl(filename, filename, nullptr);
 		std::cout << "Could not run " << filename
 		    << ": " << ::strerror(errno) << std::endl;
