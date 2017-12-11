@@ -14,6 +14,7 @@ namespace {
 	    m_rd = fds[0];
 	    m_wr = fds[1];
 	}
+	Pipe(const Pipe &) = delete;
 
 	~Pipe() {
 	    close();
@@ -43,6 +44,8 @@ namespace {
 
     class Process {
     public:
+	Process(const Process &) = delete;
+
 	Process(const char * filename) {
 	    int r = fork();
 	    if (r == -1) throw vds::syscall_failed("fork");
