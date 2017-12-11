@@ -3,6 +3,8 @@
 #include "vds_error.h"
 #include <unistd.h>
 #include <sys/wait.h>
+#include <cstring>
+#include <sstream>
 
 namespace {
     class Pipe {
@@ -93,8 +95,9 @@ namespace vds {
 
 class Backend::impl {
 public:
-    impl(std::string filename) : m_filename(filename) {
+    impl(std::unique_ptr<Process> process) : m_proc(std::move(process)) {
 	m_hasData = false;
+	m_results = fdopen(m_proc->from_process(), "r");
     }
 
     ~impl() {
@@ -102,15 +105,7 @@ public:
 	feed(nullptr, 0);
     }
 
-    void launch() {
-	if (m_proc) return;
-	m_proc.reset(new Process(m_filename.c_str()));
-	m_hasData = false;
-	m_results = fdopen(m_proc->from_process(), "r");
-    }
-
     void feed(const float * chunk, size_t n) {
-	launch();
 	int fd = m_proc->to_process();
 	int written = 0;
 	int nbytes = n*sizeof(float);
@@ -124,13 +119,10 @@ public:
 	m_hasData = true;
     }
 
-    std::string infer() {
-	if (!m_hasData) return "";
-	feed(nullptr, 0);
+    std::string getline() {
 	char * lineptr = nullptr;
 	size_t n = 0;
 	ssize_t r = ::getline(&lineptr, &n, m_results);
-	m_hasData = false;
 	if (r == -1) {
 	    if (lineptr != nullptr) ::free(lineptr);
 	    throw vds::syscall_failed("getline");
@@ -141,19 +133,33 @@ public:
 	return line;
     }
 
+    std::string infer() {
+	if (!m_hasData) return "";
+	feed(nullptr, 0);
+	std::string res = getline();
+	m_hasData = false;
+	return res;
+    }
+
     void clear() {
 	infer();
     }
 
 private:
-    std::string m_filename;
     std::unique_ptr<Process> m_proc;
     FILE * m_results;
     bool m_hasData;
 };
 
-Backend::Backend(std::string filename)
-    : pimpl(new Backend::impl(filename)) {}
+std::unique_ptr<Backend>
+Backend::make(std::string filename) {
+    return std::make_unique<Backend>(
+	std::make_unique<Backend::impl>(
+	    std::make_unique<Process>(filename.c_str())));
+}
+
+Backend::Backend(std::unique_ptr<Backend::impl> pimpl)
+    : pimpl(std::move(pimpl)) {}
 
 Backend::~Backend() {}
 void Backend::feed(const float * chunk, size_t n) {pimpl->feed(chunk, n);}

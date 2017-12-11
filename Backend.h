@@ -3,14 +3,15 @@
 
 namespace vds {
     class Backend {
+    private:
+	class impl;
+	std::unique_ptr<impl> pimpl;
     public:
-	Backend(std::string filename);
+	Backend(std::unique_ptr<impl> pimpl);
+	static std::unique_ptr<Backend> make(std::string filename);
 	~Backend();
 	void feed(const float * chunk, size_t n);
 	void clear();
 	std::string infer();
-    private:
-	class impl;
-	std::unique_ptr<impl> pimpl;
     };
 }
