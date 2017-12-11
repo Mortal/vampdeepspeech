@@ -1,3 +1,4 @@
+// vim:set sw=4 noet:
 #include "DeepSpeechPlugin.h"
 #include <sstream>
 #include "vds_error.h"

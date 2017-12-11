@@ -1,3 +1,4 @@
+// vim:set sw=4 noet:
 #include <memory>
 
 namespace vds {
