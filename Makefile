@@ -5,7 +5,7 @@ PLUGIN_SOURCES := DeepSpeechPlugin.cpp plugins.cpp Backend.cpp SilenceDetection.
 PLUGIN_HEADERS := DeepSpeechPlugin.h Backend.h vds_error.h SilenceDetection.h
 
 CPPFLAGS := -DVDS_ROOT=\""`pwd`"\"
-CXXFLAGS := -g -I/usr/include/vamp-sdk -Wall -fPIC
+CXXFLAGS := -std=gnu++14 -g -I/usr/include/vamp-sdk -Wall -fPIC
 PLUGIN_EXT := .so
 LDFLAGS := -shared -Wl,-soname=$(PLUGIN_LIBRARY_NAME)$(PLUGIN_EXT) -lvamp-sdk -Wl,--version-script=vamp-plugin.map
 
