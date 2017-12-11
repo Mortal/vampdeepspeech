@@ -57,8 +57,9 @@ namespace {
 		r = dup2(m_fromProcess.write_end(), 1);
 		if (r == -1) throw vds::syscall_failed("dup2");
 		execl(filename, filename, nullptr);
-		std::cerr << "Could not run " << filename << std::endl;
-		_exit(123);
+		std::cout << "Could not run " << filename
+		    << ": " << ::strerror(errno) << std::endl;
+		_exit(0);
 	    }
 	    m_toProcess.write_end();
 	    m_fromProcess.read_end();
@@ -98,6 +99,10 @@ public:
     impl(std::unique_ptr<Process> process) : m_proc(std::move(process)) {
 	m_hasData = false;
 	m_results = fdopen(m_proc->from_process(), "r");
+	std::string line = getline();
+	if (line != "OK") {
+	    throw vds::configuration_error(line);
+	}
     }
 
     ~impl() {

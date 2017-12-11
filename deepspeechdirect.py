@@ -5,10 +5,19 @@ import os
 # import argparse
 import sys
 # import scipy.io.wavfile as wav
-import numpy as np
 import types
 
-from deepspeech.model import Model
+try:
+    import numpy as np
+except ImportError:
+    print("Failed to import Python module numpy", flush=True)
+    sys.exit(0)
+try:
+    from deepspeech.model import Model
+except ImportError:
+    print("Failed to import Python module deepspeech", flush=True)
+    sys.exit(0)
+print("OK", flush=True)
 
 # These constants control the beam search decoder
 
