@@ -9,7 +9,7 @@ namespace {
 	Pipe() {
 	    int fds[2];
 	    int r = pipe(fds);
-	    if (r == -1) vds_error("pipe");
+	    if (r == -1) throw vds::syscall_failed("pipe");
 	    m_rd = fds[0];
 	    m_wr = fds[1];
 	}
@@ -44,12 +44,12 @@ namespace {
     public:
 	Process(const char * filename) {
 	    int r = fork();
-	    if (r == -1) vds_error("fork");
+	    if (r == -1) throw vds::syscall_failed("fork");
 	    if (r == 0) {
 		r = dup2(m_toProcess.read_end(), 0);
-		if (r == -1) vds_error("dup2");
+		if (r == -1) throw vds::syscall_failed("dup2");
 		r = dup2(m_fromProcess.write_end(), 1);
-		if (r == -1) vds_error("dup2");
+		if (r == -1) throw vds::syscall_failed("dup2");
 		execl(filename, filename, nullptr);
 		std::cerr << "Could not run " << filename << std::endl;
 		_exit(123);
@@ -111,10 +111,10 @@ public:
 	int written = 0;
 	int nbytes = n*sizeof(float);
 	char * buf = (char *) chunk;
-	if (write(fd, &n, 4) != 4) vds_error("write");
+	if (write(fd, &n, 4) != 4) throw vds::syscall_failed("write 1");
 	while (written < nbytes) {
 	    int r = write(fd, buf+written, nbytes - written);
-	    if (r < 0) vds_error("write");
+	    if (r < 0) throw vds::syscall_failed("write 2");
 	    written += r;
 	}
 	m_hasData = true;
@@ -129,7 +129,7 @@ public:
 	m_hasData = false;
 	if (r == -1) {
 	    if (lineptr != nullptr) ::free(lineptr);
-	    vds_error("getline");
+	    throw vds::syscall_failed("getline");
 	}
 	while (r > 0 && lineptr[r-1] == '\n') r--;
 	std::string line(lineptr, lineptr+r);
