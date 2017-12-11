@@ -90,10 +90,15 @@ DeepSpeechPlugin::getOutputDescriptors() const
 bool
 DeepSpeechPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
-    if (m_inputSampleRate != 16000) vds_error("Sample rate must be 16KHz");
+    if (m_inputSampleRate != 16000) {
+	std::cerr << "DeepSpeech error: Sample rate must be 16KHz" << std::endl;
+	return false;
+    }
     m_count = 0;
-    if (channels < getMinChannelCount() ||
-	channels > getMaxChannelCount()) return false;
+    if (channels < getMinChannelCount() || channels > getMaxChannelCount()) {
+	std::cerr << "DeepSpeech error: Unsupported number of channels" << std::endl;
+	return false;
+    }
 
     m_stepSize = std::min(stepSize, blockSize);
 
