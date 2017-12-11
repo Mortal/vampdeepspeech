@@ -42,7 +42,7 @@ def read_audio():
     while True:
         n_bin = sys.stdin.buffer.read(4)
         if len(n_bin) < 4:
-            print("Unexpected EOF", file=sys.stderr)
+            print("Unexpected EOF after reading %r" % n_bin, file=sys.stderr)
             break
         n = np.frombuffer(n_bin, np.int32)[0]
         if n == 0:
