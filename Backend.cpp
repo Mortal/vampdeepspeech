@@ -54,12 +54,14 @@ namespace {
 	    if (r == 0) {
 		r = dup2(m_toProcess.read_end(), 0);
 		if (r == -1) {
-		    std::cout << "dup2 failed (1)" << std::endl;
+		    std::cout << "dup2 failed (1): "
+			<< ::strerror(errno) << std::endl;
 		    _exit(0);
 		}
 		r = dup2(m_fromProcess.write_end(), 1);
 		if (r == -1) {
-		    std::cout << "dup2 failed (2)" << std::endl;
+		    std::cout << "dup2 failed (2): "
+			<< ::strerror(errno) << std::endl;
 		    _exit(0);
 		}
 		execl(filename, filename, nullptr);
