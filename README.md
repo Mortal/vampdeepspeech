@@ -11,7 +11,11 @@ Prerequisites
 
 * The VAMP SDK in `/usr/include/vamp-sdk`.
 
-* NumPy and DeepSpeech (i.e. running `python -c 'import numpy, deepspeech'` should not give an error)
+* DeepSpeech C++ library files `lib{deepspeech,deepspeech_utils,tensorflow_cc,tensorflow_framework}.so`
+  extracted into a subdirectory named `deepspeech-native-client` of this repository checkout.
+
+* DeepSpeech `native_client` header file `deepspeech.h`
+  extracted into a subdirectory named `DeepSpeech/native_client` of this repository checkout.
 
 * The DeepSpeech model files
   (`output_graph.pb`, `alphabet.txt`, `lm.binary`, `trie`)

@@ -4,10 +4,14 @@ PLUGIN_SOURCES := DeepSpeechPlugin.cpp plugins.cpp Backend.cpp SilenceDetection.
 
 PLUGIN_HEADERS := DeepSpeechPlugin.h Backend.h vds_error.h SilenceDetection.h
 
-CPPFLAGS := -DVDS_ROOT=\""`pwd`"\"
-CXXFLAGS := -std=gnu++14 -g -I/usr/include/vamp-sdk -Wall -fPIC
+DS_RUN_PATH ?= "`pwd`/deepspeech-native-client"
+DS_INCLUDE_PATH ?= "`pwd`/DeepSpeech/native_client"
+CPPFLAGS := -DVDS_ROOT=\""`pwd`"\" -I${DS_INCLUDE_PATH} -I/usr/include/vamp-sdk
+CXXFLAGS := -std=gnu++14 -g -Wall -fPIC
 PLUGIN_EXT := .so
 LDFLAGS := -shared -Wl,-soname=$(PLUGIN_LIBRARY_NAME)$(PLUGIN_EXT) -lvamp-sdk -Wl,--version-script=vamp-plugin.map
+LDFLAGS += -L${DS_RUN_PATH} -Wl,-rpath=${DS_RUN_PATH} -ldeepspeech_utils -ltensorflow_framework -ldeepspeech -ltensorflow_cc
+
 
 ##  All of the above
 
