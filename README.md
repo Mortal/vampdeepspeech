@@ -38,8 +38,6 @@ TODO
 
 This is very pre-alpha quality.
 
-* Check for missing DeepSpeech models and give error message
-
 * Customizable silence detection
 
 * Auto resample non-16KHz input
