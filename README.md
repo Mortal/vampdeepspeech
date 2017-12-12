@@ -45,3 +45,5 @@ This is very pre-alpha quality.
 * Customizable silence detection
 
 * Auto resample non-16KHz input
+
+* Check that model files exist and give proper error message if they don't
