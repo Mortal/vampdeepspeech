@@ -2,10 +2,7 @@
 from timeit import default_timer as timer
 
 import os
-# import argparse
 import sys
-# import scipy.io.wavfile as wav
-import types
 
 try:
     import numpy as np
@@ -17,7 +14,6 @@ try:
 except ImportError:
     print("Failed to import Python module deepspeech", flush=True)
     sys.exit(0)
-print("OK", flush=True)
 
 # These constants control the beam search decoder
 
@@ -63,37 +59,30 @@ def read_audio():
 
 
 def main():
-    # parser = argparse.ArgumentParser(description='Benchmarking tooling for DeepSpeech native_client.')
-    # parser.add_argument('model', type=str,
-    #                     help='Path to the model (protocol buffer binary file)')
-    # parser.add_argument('audio', type=str,
-    #                     help='Path to the audio file to run (WAV format)')
-    # parser.add_argument('alphabet', type=str,
-    #                     help='Path to the configuration file specifying the alphabet used by the network')
-    # parser.add_argument('lm', type=str, nargs='?',
-    #                     help='Path to the language model binary file')
-    # parser.add_argument('trie', type=str, nargs='?',
-    #                     help='Path to the language model trie file created with native_client/generate_trie')
-    args = types.SimpleNamespace()
     base = os.path.dirname(__file__)
-    args.model = os.path.join(base, 'models', 'output_graph.pb')
-    args.alphabet = os.path.join(base, 'models', 'alphabet.txt')
-    args.lm = os.path.join(base, 'models', 'lm.binary')
-    args.trie = os.path.join(base, 'models', 'trie')
+    model = os.path.join(base, 'models', 'output_graph.pb')
+    alphabet = os.path.join(base, 'models', 'alphabet.txt')
+    lm = os.path.join(base, 'models', 'lm.binary')
+    trie = os.path.join(base, 'models', 'trie')
+    missing = [f for f in (model, alphabet, lm, trie)
+               if not os.access(f, os.R_OK)]
+    if missing:
+        print('Model missing/inaccessible: %r' % missing, flush=True)
+        return
+    print("OK", flush=True)
 
-    print('Loading model from file %s' % (args.model), file=sys.stderr)
+    print('Loading model from file %s' % (model), file=sys.stderr)
     model_load_start = timer()
-    ds = Model(args.model, N_FEATURES, N_CONTEXT, args.alphabet, BEAM_WIDTH)
+    ds = Model(model, N_FEATURES, N_CONTEXT, alphabet, BEAM_WIDTH)
     model_load_end = timer() - model_load_start
     print('Loaded model in %0.3fs.' % (model_load_end), file=sys.stderr)
 
-    if args.lm and args.trie:
-        print('Loading language model from files %s %s' % (args.lm, args.trie), file=sys.stderr)
-        lm_load_start = timer()
-        ds.enableDecoderWithLM(args.alphabet, args.lm, args.trie, LM_WEIGHT,
-                               WORD_COUNT_WEIGHT, VALID_WORD_COUNT_WEIGHT)
-        lm_load_end = timer() - lm_load_start
-        print('Loaded language model in %0.3fs.' % (lm_load_end), file=sys.stderr)
+    print('Loading language model from files %s %s' % (lm, trie), file=sys.stderr)
+    lm_load_start = timer()
+    ds.enableDecoderWithLM(alphabet, lm, trie, LM_WEIGHT,
+                           WORD_COUNT_WEIGHT, VALID_WORD_COUNT_WEIGHT)
+    lm_load_end = timer() - lm_load_start
+    print('Loaded language model in %0.3fs.' % (lm_load_end), file=sys.stderr)
 
     fs = 16000
     while True:
