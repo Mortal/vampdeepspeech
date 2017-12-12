@@ -98,16 +98,51 @@ namespace {
 	Pipe m_fromProcess;
 	int m_pid;
     };
+
+    class LineReader {
+    public:
+	LineReader(int fd)
+	    : m_file(::fdopen(fd, "r"))
+	    , m_buf(nullptr)
+	    , m_bufSize(0)
+	{
+	    if (m_file == nullptr) throw vds::syscall_failed("fdopen");
+	}
+
+	~LineReader() {
+	    ::free(m_buf);
+	    m_buf = nullptr;
+	    if (m_file != nullptr) ::fclose(m_file);
+	    m_file = nullptr;
+	}
+
+	LineReader(const LineReader &) = delete;
+
+	std::string next() {
+	    ssize_t r = ::getline(&m_buf, &m_bufSize, m_file);
+	    if (r == -1)
+		throw vds::syscall_failed("getline");
+	    while (r > 0 && m_buf[r-1] == '\n') r--;
+	    return std::string(m_buf, m_buf + r);
+	}
+
+    private:
+	FILE * m_file;
+	char * m_buf;
+	size_t m_bufSize;
+    };
 }
 
 namespace vds {
 
 class Backend::impl {
 public:
-    impl(std::unique_ptr<Process> process) : m_proc(std::move(process)) {
-	m_hasData = false;
-	m_results = fdopen(m_proc->from_process(), "r");
-	std::string line = getline();
+    impl(std::unique_ptr<Process> process)
+	: m_proc(std::move(process))
+	, m_results(std::make_unique<LineReader>(m_proc->from_process()))
+	, m_hasData(false)
+    {
+	std::string line = m_results->next();
 	if (line != "OK") {
 	    throw vds::configuration_error(line);
 	}
@@ -132,24 +167,10 @@ public:
 	m_hasData = true;
     }
 
-    std::string getline() {
-	char * lineptr = nullptr;
-	size_t n = 0;
-	ssize_t r = ::getline(&lineptr, &n, m_results);
-	if (r == -1) {
-	    if (lineptr != nullptr) ::free(lineptr);
-	    throw vds::syscall_failed("getline");
-	}
-	while (r > 0 && lineptr[r-1] == '\n') r--;
-	std::string line(lineptr, lineptr+r);
-	::free(lineptr);
-	return line;
-    }
-
     std::string infer() {
 	if (!m_hasData) return "";
 	feed(nullptr, 0);
-	std::string res = getline();
+	std::string res = m_results->next();
 	m_hasData = false;
 	return res;
     }
@@ -160,7 +181,7 @@ public:
 
 private:
     std::unique_ptr<Process> m_proc;
-    FILE * m_results;
+    std::unique_ptr<LineReader> m_results;
     bool m_hasData;
 };
 
