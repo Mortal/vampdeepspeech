@@ -14,7 +14,6 @@
 namespace {
     std::unique_ptr<DeepSpeech::Model>
     get_model(std::string dirname) {
-	std::string filename = dirname + "/deepspeechdirect.py";
 	std::string modelPath = dirname + "/models/output_graph.pb";
 	std::string alphabetPath = dirname + "/models/alphabet.txt";
 	std::string lmPath = dirname + "/models/lm.binary";
