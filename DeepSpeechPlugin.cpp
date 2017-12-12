@@ -103,7 +103,7 @@ DeepSpeechPlugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
     m_stepSize = std::min(stepSize, blockSize);
 
     try {
-	m_backend = vds::Backend::make(VDS_ROOT "/deepspeechdirect.py");
+	m_backend = vds::Backend::make(VDS_ROOT);
     } catch (vds::configuration_error e) {
 	std::cerr << "DeepSpeech error: " << e.what() << std::endl;
 	return false;

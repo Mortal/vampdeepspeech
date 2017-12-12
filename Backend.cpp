@@ -186,7 +186,8 @@ private:
 };
 
 std::unique_ptr<Backend>
-Backend::make(std::string filename) {
+Backend::make(std::string dirname) {
+    std::string filename = dirname + "/deepspeechdirect.py";
     return std::make_unique<Backend>(
 	std::make_unique<Backend::impl>(
 	    std::make_unique<Process>(filename.c_str())));

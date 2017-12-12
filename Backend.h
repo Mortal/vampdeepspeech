@@ -8,7 +8,7 @@ namespace vds {
 	std::unique_ptr<impl> pimpl;
     public:
 	Backend(std::unique_ptr<impl> pimpl);
-	static std::unique_ptr<Backend> make(std::string filename);
+	static std::unique_ptr<Backend> make(std::string dirname);
 	~Backend();
 	void feed(const float * chunk, size_t n);
 	void clear();
