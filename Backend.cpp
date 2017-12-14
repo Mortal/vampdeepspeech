@@ -3,6 +3,8 @@
 #include "vds_error.h"
 #include <deepspeech.h>
 #include <vector>
+#include <iostream>
+#include <time.h>
 
 #define N_CEP 26
 #define N_CONTEXT 9
@@ -12,15 +14,35 @@
 #define VALID_WORD_COUNT_WEIGHT 1.00f
 
 namespace {
+    class timer {
+    public:
+	timer() {
+	    ::clock_gettime(CLOCK_MONOTONIC, &t1);
+	}
+
+	double elapsed() {
+	    ::clock_gettime(CLOCK_MONOTONIC, &t2);
+	    double res = (t2.tv_sec-t1.tv_sec) + 1e-9 * (t2.tv_nsec - t1.tv_nsec);
+	    t1 = t2;
+	    return res;
+	}
+    private:
+	struct timespec t1;
+	struct timespec t2;
+    };
+
     std::unique_ptr<DeepSpeech::Model>
     get_model(std::string dirname) {
 	std::string modelPath = dirname + "/models/output_graph.pb";
 	std::string alphabetPath = dirname + "/models/alphabet.txt";
 	std::string lmPath = dirname + "/models/lm.binary";
 	std::string triePath = dirname + "/models/trie";
+	timer t;
 	std::unique_ptr<DeepSpeech::Model> ctx =
 	    std::make_unique<DeepSpeech::Model>(modelPath.c_str(), N_CEP, N_CONTEXT, alphabetPath.c_str(), BEAM_WIDTH);
+	std::cerr << "Loading model " << modelPath << " took " << t.elapsed() << " s" << std::endl;
 	ctx->enableDecoderWithLM(alphabetPath.c_str(), lmPath.c_str(), triePath.c_str(), LM_WEIGHT, WORD_COUNT_WEIGHT, VALID_WORD_COUNT_WEIGHT);
+	std::cerr << "Loading language model " << lmPath << " took " << t.elapsed() << " s" << std::endl;
 	return ctx;
     }
 }
@@ -45,10 +67,14 @@ public:
 
     std::string infer() {
 	if (m_buf.empty()) return "";
+	timer t;
 	char * r = m_ctx->stt(&m_buf[0], m_buf.size(), SAMPLE_RATE);
 	if (r == nullptr)
 	    throw vds::syscall_failed("Model::stt");
 	std::string res = r;
+	std::cerr << "[" << t.elapsed() << " s/"
+	    << (m_buf.size() / 16000.0) << " s] \""
+	    << res << "\"" << std::endl;
 	::free(r);
 	m_buf.clear();
 	return res;
